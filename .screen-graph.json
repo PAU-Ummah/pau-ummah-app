@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {
+      "id": "src/screens/Main/Main.jsx",
+      "label": "Main",
+      "routes": [
+        "/*",
+        "/main"
+      ],
+      "dataModelId": "17:29",
+      "isRoot": true
+    },
+    {
+      "id": "src/screens/Desktop/Desktop.jsx",
+      "label": "Desktop",
+      "routes": [
+        "/desktop-u45-1"
+      ],
+      "dataModelId": "37:70"
+    }
+  ],
+  "edges": []
+}
