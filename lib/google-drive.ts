@@ -19,17 +19,21 @@ interface ListMediaOptions {
   categoryName?: string;
 }
 
+// Infer the exact auth type accepted by google.drive options to avoid cross-package type conflicts
+type DriveOptions = Parameters<typeof google.drive>[0];
+type DriveAuth = DriveOptions extends { auth?: infer A } ? A : never;
+
 class GoogleDriveService {
   private client: drive_v3.Drive | null = null;
-  // Loosen the type to avoid version conflicts across google-auth-library types
-  private auth: any | null = null;
+  // Auth client used for Drive API requests
+  private auth: unknown | null = null;
   private thumbnailCache = new Map<string, string>();
   private listCache = new Map<string, { data: MediaFeedResponse; expiresAt: number }>();
   private readonly LIST_CACHE_TTL_MS = 60 * 1000; // 60s
   private categoryFolderCache: { mapping: Record<string, string>; expiresAt: number } | null = null;
   private readonly CATEGORY_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-  private createAuthClient() {
+  private createAuthClient(): unknown {
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
@@ -44,7 +48,7 @@ class GoogleDriveService {
     });
   }
 
-  private async getAuthClient() {
+  private async getAuthClient(): Promise<unknown> {
     if (this.auth) return this.auth;
     this.auth = this.createAuthClient();
     return this.auth;
@@ -53,16 +57,16 @@ class GoogleDriveService {
   async getAccessToken(): Promise<string> {
     const auth = await this.getAuthClient();
     // google-auth-library returns an object or string depending on version; normalize to string
-    const tokenResp = await auth.getAccessToken();
+    const tokenResp = await (auth as { getAccessToken: () => Promise<string | { token?: string | null }> }).getAccessToken();
     const token = typeof tokenResp === "string" ? tokenResp : tokenResp?.token;
     if (!token) throw new Error("Unable to acquire Google access token");
     return token;
   }
 
-  private async getClient() {
+  private async getClient(): Promise<drive_v3.Drive> {
     if (this.client) return this.client;
-    const auth = await this.getAuthClient();
-    this.client = google.drive({ version: "v3", auth: auth as any });
+    const auth = (await this.getAuthClient()) as unknown as DriveAuth;
+    this.client = google.drive({ version: "v3", auth });
     return this.client;
   }
 
