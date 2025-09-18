@@ -1,9 +1,9 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type IntersectionArgs = IntersectionObserverInit & { freezeOnceVisible?: boolean };
 
 export function useIntersection<T extends Element>(options: IntersectionArgs = {}): {
-  ref: RefObject<T>;
+  ref: React.MutableRefObject<T | null>;
   entry: IntersectionObserverEntry | null;
   isVisible: boolean;
 } {
