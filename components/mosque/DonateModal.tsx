@@ -33,7 +33,7 @@ export function DonateModal({
       await navigator.clipboard.writeText(accountNumber);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
+    } catch {
       // no-op; in rare cases clipboard APIs may be blocked
     }
   };

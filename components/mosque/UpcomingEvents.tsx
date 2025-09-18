@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MEDIA_FILTERS } from "@/lib/constants";
-import type { EventCategory } from "@/types";
+import type { EventCategory, MediaItem } from "@/types";
 import { FilterPills } from "@/components/mosque/FilterPills";
 import { AnimatedCard } from "@/components/mosque/AnimatedCard";
 import { Button } from "@/components/ui/button";
@@ -33,44 +33,46 @@ export function UpcomingEvents() {
         </div>
 
         <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2 md:gap-6">
-          {(isLoading ? Array.from({ length: 2 }) : itemsToShow).map((item: any, index: number) => (
-            <AnimatedCard key={index} delay={index * 140} loading={isLoading}>
-              {isLoading ? (
-                <Skeleton className="h-64 w-full rounded-3xl" />
-              ) : (
-                <div className="flex h-full flex-col gap-4 sm:flex-row">
-                  <div className="relative h-44 w-full overflow-hidden rounded-3xl sm:h-auto sm:w-1/2">
-                    <Image
-                      src={item.thumbnail || item.url}
-                      alt={item.title}
-                      fill
-                      className="object-cover transition-transform duration-700 hover:scale-105"
-                      sizes="(min-width: 1024px) 50vw, 100vw"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--brand-secondary)]">
-                        {item.eventType}
-                      </p>
-                      <h3 className="mt-2 text-xl font-semibold text-[var(--brand-primary)]">{item.title}</h3>
-                      <p className="mt-2 text-sm text-slate-600">{item.description}</p>
+          {isLoading
+            ? Array.from({ length: 2 }).map((_, index: number) => (
+                <AnimatedCard key={index} delay={index * 140} loading>
+                  <Skeleton className="h-64 w-full rounded-3xl" />
+                </AnimatedCard>
+              ))
+            : itemsToShow.map((item: MediaItem, index: number) => (
+                <AnimatedCard key={item.id ?? index} delay={index * 140} loading={false}>
+                  <div className="flex h-full flex-col gap-4 sm:flex-row">
+                    <div className="relative h-44 w-full overflow-hidden rounded-3xl sm:h-auto sm:w-1/2">
+                      <Image
+                        src={item.thumbnail || item.url}
+                        alt={item.title}
+                        fill
+                        className="object-cover transition-transform duration-700 hover:scale-105"
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                      />
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                      <span>{new Date(item.date).toLocaleDateString()}</span>
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--brand-secondary)]">
+                          {item.eventType}
+                        </p>
+                        <h3 className="mt-2 text-xl font-semibold text-[var(--brand-primary)]">{item.title}</h3>
+                        <p className="mt-2 text-sm text-slate-600">{item.description}</p>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                        <span>{new Date(item.date).toLocaleDateString()}</span>
+                      </div>
+                      {item.url ? (
+                        <Button variant="link" className="px-0 text-[var(--brand-secondary)]" asChild>
+                          <Link href={item.url} target="_blank" rel="noreferrer">
+                            View media
+                          </Link>
+                        </Button>
+                      ) : null}
                     </div>
-                    {item.url ? (
-                      <Button variant="link" className="px-0 text-[var(--brand-secondary)]" asChild>
-                        <Link href={item.url} target="_blank" rel="noreferrer">
-                          View media
-                        </Link>
-                      </Button>
-                    ) : null}
                   </div>
-                </div>
-              )}
-            </AnimatedCard>
-          ))}
+                </AnimatedCard>
+              ))}
         </div>
       </div>
     </section>
