@@ -73,7 +73,7 @@ export function Navigation() {
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <Link href="#home" className="flex items-center gap-3" onClick={() => handleSmoothScroll("#home")}>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-secondary)]/15 text-[var(--brand-secondary)]">
-            <Image src="/logo.jpg" alt="PAU Mosque logo" width={50} height={50} priority className="object-contain" />
+            <Image src="/logo.jpg" alt="PAU Muslim Ummah logo" width={50} height={50} priority className="object-contain" />
           </div>
           <div className="text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--brand-secondary)]">PAU Muslim Ummah</p>
