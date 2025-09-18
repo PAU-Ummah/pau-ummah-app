@@ -13,12 +13,17 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Pan Atlantic University Mosque",
+  title: "PAU Muslim Ummah",
   description:
     "Experience the vibrant Muslim community at Pan Atlantic University with prayer times, programmes, and a dynamic media feed.",
   metadataBase: new URL("https://pau-ummah.app"),
+  icons: {
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
   openGraph: {
-    title: "Pan Atlantic University Mosque",
+    title: "PAU Muslim Ummah",
     description:
       "Stay updated with PAU Muslim community events, prayer schedules, and inspiring media moments.",
     url: "https://pau-ummah.app",
