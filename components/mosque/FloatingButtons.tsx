@@ -29,7 +29,7 @@ export function FloatingButtons() {
         className="shadow-floating"
         asChild
       >
-        <Link href="https://wa.me/2347069484903" target="_blank" rel="noreferrer" className="flex items-center gap-2">
+        <Link href="https://chat.whatsapp.com/KoHiDNofEsuHJDDjAkZ3dR?mode=ems_copy_t" target="_blank" rel="noreferrer" className="flex items-center gap-2">
           <MessageCircle className="h-4 w-4" /> WhatsApp
         </Link>
       </Button>

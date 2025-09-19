@@ -4,13 +4,16 @@ import { PRAYER_SCHEDULE } from "@/lib/constants";
 import { usePrayerTimes } from "@/lib/hooks/usePrayerTimes";
 import { CountdownTimer } from "@/components/mosque/CountdownTimer";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import type { PrayerSchedule } from "@/types";
 
 export function PrayerTimings() {
-  const { state } = usePrayerTimes(PRAYER_SCHEDULE);
+  const { state, todaysSchedule } = usePrayerTimes(PRAYER_SCHEDULE);
   const { currentPrayer, nextPrayer, timeUntilNext, progress } = state;
+  
+  // Use todaysSchedule if available, otherwise fall back to PRAYER_SCHEDULE
+  const displaySchedule = todaysSchedule?.length ? todaysSchedule : PRAYER_SCHEDULE;
 
   return (
     <section id="prayer-times" className="relative bg-white py-16 md:py-20">
@@ -52,17 +55,71 @@ export function PrayerTimings() {
                     <span>Congregation</span>
                     <span className="font-semibold text-[var(--brand-primary)]">{nextPrayer.congregation}</span>
                   </div>
-                  <Button variant="primary" className="w-full">
-                    Subscribe for reminders
-                  </Button>
+                  <div className="h-12"></div>
                 </div>
               </div>
             </div>
           ) : null}
         </div>
 
+        {/* Mobile: Stacked cards */}
         <motion.div
-          className="flex-1 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-floating md:p-6"
+          className="block w-full rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-floating md:hidden"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <div className="mx-auto w-full max-w-md space-y-3">
+            {displaySchedule.map((prayer: PrayerSchedule) => {
+              const isActive = currentPrayer?.name === prayer.name;
+              const isNext = nextPrayer?.name === prayer.name;
+              return (
+                <div
+                  key={prayer.name}
+                  className={cn(
+                    "rounded-2xl border border-slate-100 p-4 transition-colors",
+                    isActive ? "bg-[var(--brand-secondary)]/10" : isNext ? "bg-slate-50" : "bg-white/90",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-base font-semibold text-[var(--brand-primary)]">
+                      {prayer.displayName ?? prayer.name}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isActive ? (
+                        <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[var(--brand-secondary)]">
+                          Now
+                        </span>
+                      ) : null}
+                      {isNext && !isActive ? (
+                        <span className="inline-flex items-center rounded-full bg-[var(--brand-secondary)]/20 px-2 py-0.5 text-xs font-semibold text-[var(--brand-secondary)]">
+                          Next
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-600">
+                    <div className="rounded-xl bg-white/90 px-3 py-2">
+                      <span className="block text-[0.7rem] uppercase tracking-wider text-slate-500">Adhan</span>
+                      <span className="font-semibold text-[var(--brand-primary)]">{prayer.callToPrayer}</span>
+                    </div>
+                    <div className="rounded-xl bg-white/90 px-3 py-2">
+                      <span className="block text-[0.7rem] uppercase tracking-wider text-slate-500">Iqamah</span>
+                      <span className="font-semibold text-[var(--brand-primary)]">{prayer.congregation}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <Progress value={isActive ? (progress ?? 0) * 100 : isNext ? 5 : 0} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Desktop/Tablet: Table */}
+        <motion.div
+          className="hidden flex-1 rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-floating md:block md:p-6"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -79,7 +136,7 @@ export function PrayerTimings() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {PRAYER_SCHEDULE.map((prayer) => {
+                  {displaySchedule.map((prayer: PrayerSchedule) => {
                     const isActive = currentPrayer?.name === prayer.name;
                     const isNext = nextPrayer?.name === prayer.name;
                     return (

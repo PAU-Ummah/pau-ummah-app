@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import useSWRInfinite from "swr/infinite";
 import type { MediaFeedResponse, MediaItem } from "@/types";
-import { wait } from "@/lib/utils";
 
 // Each load should return 20 items
 const PAGE_SIZE = 20;
@@ -143,7 +142,6 @@ export function useMediaFeed({ category }: UseMediaFeedOptions = {}) {
         ...item,
         likes: item.likes + 1,
       }));
-      await wait(400);
     },
     [optimisticUpdate],
   );
