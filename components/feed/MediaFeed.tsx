@@ -17,13 +17,19 @@ export function MediaFeed() {
 
   useEffect(() => {
     if (!sentinelRef.current) return;
-    const observer = new IntersectionObserver((entries) => {
-      const [entry] = entries;
-      if (entry.isIntersecting) {
-        setAttemptedLoadMore(true);
-        void loadMore();
-      }
-    }, { threshold: 0.6 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setAttemptedLoadMore(true);
+          void loadMore();
+        }
+      },
+      {
+        threshold: 0.25,
+        rootMargin: "200px 0px",
+      },
+    );
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
@@ -63,7 +69,7 @@ export function MediaFeed() {
             onClick={() => setShowFilters(false)}
             aria-hidden
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border border-white/10 bg-zinc-900/95 p-4 shadow-2xl">
+          <div className="fixed inset-x-0 top-0 z-50 rounded-b-2xl border border-white/10 bg-zinc-900/95 px-4 pb-4 pt-[calc(env(safe-area-inset-top)+12px)] shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-semibold text-white/90">Filters</span>
               <button
@@ -92,13 +98,17 @@ export function MediaFeed() {
       <div className="relative mt-4 flex-1 overflow-y-auto touch-pan-y snap-y snap-mandatory snap-always pb-24 [padding-bottom:env(safe-area-inset-bottom)]">
         <div className="flex flex-col">
           {isLoading && combinedItems.length === 0 ? (
-            <div className="flex h-64 items-center justify-center text-white/70">Loading media…</div>
+            <div className="flex h-[78svh] items-center justify-center">
+              <div className="relative h-full w-full max-w-[420px] overflow-hidden rounded-[24px] md:h-[85vh] md:rounded-[32px]">
+                <div className="absolute inset-0 animate-pulse bg-white/5" />
+              </div>
+            </div>
           ) : combinedItems.length === 0 ? (
             <div className="flex h-64 items-center justify-center text-white/70">No media found for this category.</div>
           ) : (
             <>
-              {combinedItems.map((item) => (
-                <MediaItem key={item.id} item={item} onLike={likeMedia} />
+              {combinedItems.map((item, idx) => (
+                <MediaItem key={`${item.id}-${idx}`} item={item} onLike={likeMedia} priority={idx < 1} />
               ))}
               <div ref={sentinelRef} className="h-24 snap-none" />
             </>

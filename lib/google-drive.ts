@@ -29,7 +29,8 @@ class GoogleDriveService {
   private auth: unknown | null = null;
   private thumbnailCache = new Map<string, string>();
   private listCache = new Map<string, { data: MediaFeedResponse; expiresAt: number }>();
-  private readonly LIST_CACHE_TTL_MS = 60 * 1000; // 60s
+  // Slightly longer TTL to avoid hammering Drive on scroll; API route still sets CDN cache
+  private readonly LIST_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
   private categoryFolderCache: { mapping: Record<string, string>; expiresAt: number } | null = null;
   private readonly CATEGORY_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -113,6 +114,35 @@ class GoogleDriveService {
 
   async listMediaFiles({ folderId, pageSize = 20, pageToken, categoryName }: ListMediaOptions): Promise<MediaFeedResponse> {
     try {
+      // Parse synthetic pagination token: "seed:pageIndex"
+      let seed: number;
+      let pageIndex = 0;
+      if (pageToken && pageToken.includes(":")) {
+        const [s, p] = pageToken.split(":");
+        seed = Number(s);
+        pageIndex = Number(p) || 0;
+        if (!Number.isFinite(seed)) seed = Math.floor(Math.random() * 1_000_000_000);
+      } else {
+        seed = Math.floor(Math.random() * 1_000_000_000);
+      }
+
+      // Deterministic PRNG and shuffle based on seed (Mulberry32)
+      const mulberry32 = (s: number) => () => {
+        let t = (s += 0x6D2B79F5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+      const seededShuffle = <T,>(arr: T[], s: number): T[] => {
+        const rand = mulberry32(s);
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      };
+
       // cache key based on list parameters
       const key = `${folderId}:${pageSize}:${pageToken ?? ""}:${categoryName ?? ""}`;
       const now = Date.now();
@@ -142,11 +172,28 @@ class GoogleDriveService {
       let items: MediaItem[] = [];
 
       if (eventFolders.length > 0) {
-        // There are subfolders — they might be event folders or category folders containing event folders.
-        for (const level1Folder of eventFolders) {
+        // Build a list of source folders to sample from. If level1 folders contain grandchildren,
+        // treat each grandchild as an event folder; otherwise, use the level1 folder itself.
+
+        // Utility: shuffle array (Fisher-Yates)
+        const shuffle = <T,>(arr: T[]): T[] => {
+          const copy = [...arr];
+          for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+          }
+          return copy;
+        };
+
+        type Source = { id: string; eventName?: string; categoryFromFolder?: string; };
+        let sources: Source[] = [];
+
+        // Deterministically shuffle first-level folders to avoid repetition across pages
+        const shuffledLevel1 = seededShuffle(eventFolders.filter((f) => !!f.id), seed + 11);
+
+        for (const level1Folder of shuffledLevel1) {
           if (!level1Folder.id) continue;
 
-          // Check if this folder contains further subfolders (grandchildren)
           const childFolderQuery = [
             `'${level1Folder.id}' in parents`,
             "trashed = false",
@@ -162,74 +209,92 @@ class GoogleDriveService {
 
           const grandchildren = childFolderRes.data.files ?? [];
 
-          const collectFromFolder = async (folderIdToScan: string, eventName?: string) => {
-            const mediaQuery = [
-              `'${folderIdToScan}' in parents`,
-              "trashed = false",
-              `(mimeType contains 'video/' or mimeType contains 'image/')`,
-            ].join(" and ");
-
-            const mediaRes = await drive.files.list({
-              q: mediaQuery,
-              fields:
-                "files(id, name, mimeType, createdTime, description, webViewLink, webContentLink, thumbnailLink, videoMediaMetadata(durationMillis), imageMediaMetadata(width, height))",
-              orderBy: "createdTime desc",
-              pageSize: Math.min(pageSize - items.length, pageSize),
-              supportsAllDrives: true,
-              includeItemsFromAllDrives: true,
-            });
-
-            const files = mediaRes.data.files ?? [];
-            const mapped: MediaItem[] = files
-              .filter((file) => file.mimeType && MEDIA_MIME_TYPES.some((mime) => file.mimeType?.startsWith(mime.split("/")[0])))
-              .map((file) => {
-                const isVideo = file.mimeType?.startsWith("video");
-                const id = file.id ?? "";
-                // Determine category from parent folder if categoryName isn't provided
-                const folderCategory = (level1Folder.name || "").trim().toLowerCase();
-                const allowed: EventCategory[] = ["education", "spiritual", "community", "charity", "youth", "volunteering"];
-                const resolvedCategory: EventCategory | "general" = (categoryName as EventCategory) ?? (allowed.includes(folderCategory as EventCategory) ? (folderCategory as EventCategory) : "general");
-                return {
-                  id,
-                  type: isVideo ? "video" : "image",
-                  url: isVideo
-                    ? `/api/media/stream-video/${id}`
-                    : `/api/media/stream/${id}`,
-                  thumbnail: isVideo
-                    ? (file.thumbnailLink ?? file.webViewLink ?? "")
-                    : `/api/media/stream/${id}`,
-                  // Prefer the event folder name as the title, not the raw filename
-                  title: eventName ?? (level1Folder.name ?? "Media"),
-                  description: file.description ?? (eventName ? `Event: ${eventName}` : ""),
-                  date: file.createdTime ?? new Date().toISOString(),
-                  eventType: resolvedCategory,
-                  likes: Math.floor(Math.random() * 1500) + 100,
-                  views: Math.floor(Math.random() * 25000) + 500,
-                  duration: file.videoMediaMetadata?.durationMillis ? Number(file.videoMediaMetadata.durationMillis) / 1000 : undefined,
-                  tags: eventName ? [eventName] : (level1Folder.name ? [level1Folder.name] : undefined),
-                };
-              });
-
-            items.push(...mapped);
-          };
-
           if (grandchildren.length > 0) {
-            // Dive one more level: treat grandchildren as event folders
-            for (const level2Folder of grandchildren) {
+            const shuffledGrandChildren = shuffle(grandchildren.filter((f) => !!f.id));
+            for (const level2Folder of shuffledGrandChildren) {
               if (!level2Folder.id) continue;
-              await collectFromFolder(level2Folder.id, level2Folder.name ?? undefined);
-              if (items.length >= pageSize) break;
+              sources.push({ id: level2Folder.id, eventName: level2Folder.name ?? undefined, categoryFromFolder: level1Folder.name ?? undefined });
             }
           } else {
-            // No grandchildren; collect media directly from this folder
-            await collectFromFolder(level1Folder.id, level1Folder.name ?? undefined);
+            sources.push({ id: level1Folder.id, eventName: level1Folder.name ?? undefined, categoryFromFolder: level1Folder.name ?? undefined });
           }
-
-          if (items.length >= pageSize) break;
         }
 
-        // When traversing nested folders, omit pagination for now (single page response)
-        const result: MediaFeedResponse = { items: items.slice(0, pageSize), nextPageToken: undefined };
+        // Deterministically shuffle sources for stable randomness across pages
+        sources = seededShuffle(sources, seed + 23);
+
+        // To avoid too many API calls, cap the number of sources and items per source
+        const maxSources = Math.min(sources.length, Math.max(4, Math.ceil(pageSize / 3))); // e.g., up to ~6-8 for pageSize 20
+        const perSource = Math.max(1, Math.ceil(pageSize / maxSources));
+
+        const allowed: EventCategory[] = ["education", "spiritual", "community", "charity", "youth", "volunteering"];
+
+        const collected: MediaItem[] = [];
+        const seenIds = new Set<string>();
+        for (let i = 0; i < maxSources && collected.length < pageSize; i++) {
+          const src = sources[i];
+          const mediaQuery = [
+            `'${src.id}' in parents`,
+            "trashed = false",
+            `(mimeType contains 'video/' or mimeType contains 'image/')`,
+          ].join(" and ");
+
+          // Fetch a bit more than needed to allow within-folder randomization and paging slices
+          const sliceOffset = pageIndex * perSource;
+          const fetchCount = Math.min(50, Math.max(perSource * (pageIndex + 2), perSource * 2));
+
+          const mediaRes = await drive.files.list({
+            q: mediaQuery,
+            fields:
+              "files(id, name, mimeType, createdTime, description, webViewLink, webContentLink, thumbnailLink, videoMediaMetadata(durationMillis), imageMediaMetadata(width, height))",
+            orderBy: "createdTime desc",
+            pageSize: fetchCount,
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
+          });
+
+          const files = mediaRes.data.files ?? [];
+          // Deterministically shuffle within this folder, varying by seed + source index + page
+          const filesShuffled = seededShuffle(files, seed + i * 101 + pageIndex * 1009);
+          const filesSliced = filesShuffled.slice(sliceOffset, sliceOffset + perSource);
+
+          const mapped: MediaItem[] = filesSliced
+            .filter((file) => !!file.id && file.mimeType && MEDIA_MIME_TYPES.some((mime) => file.mimeType?.startsWith(mime.split("/")[0])))
+            .map((file) => {
+              const isVideo = file.mimeType?.startsWith("video");
+              const id = file.id ?? "";
+              const folderCategory = (src.categoryFromFolder || "").trim().toLowerCase();
+              const resolvedCategory: EventCategory | "general" = (categoryName as EventCategory) ?? (allowed.includes(folderCategory as EventCategory) ? (folderCategory as EventCategory) : "general");
+              return {
+                id,
+                type: isVideo ? "video" : "image",
+                url: isVideo ? `/api/media/stream-video/${id}` : `/api/media/stream/${id}`,
+                thumbnail: isVideo ? (file.thumbnailLink ?? file.webViewLink ?? "") : `/api/media/stream/${id}`,
+                title: src.eventName ?? "Media",
+                description: file.description ?? (src.eventName ? `Event: ${src.eventName}` : ""),
+                date: file.createdTime ?? new Date().toISOString(),
+                eventType: resolvedCategory,
+                likes: Math.floor(Math.random() * 1500) + 100,
+                views: Math.floor(Math.random() * 25000) + 500,
+                duration: file.videoMediaMetadata?.durationMillis ? Number(file.videoMediaMetadata.durationMillis) / 1000 : undefined,
+                tags: src.eventName ? [src.eventName] : (src.categoryFromFolder ? [src.categoryFromFolder] : undefined),
+              } as MediaItem;
+            });
+
+          for (const m of mapped) {
+            if (!seenIds.has(m.id)) {
+              seenIds.add(m.id);
+              collected.push(m);
+              if (collected.length >= pageSize) break;
+            }
+          }
+          if (collected.length >= pageSize) break;
+        }
+
+        // Shuffle final items deterministically for this page
+        const finalItems = seededShuffle(collected, seed + 777).slice(0, pageSize);
+        const nextToken = finalItems.length >= pageSize ? `${seed}:${pageIndex + 1}` : undefined;
+        const result: MediaFeedResponse = { items: finalItems, nextPageToken: nextToken };
         this.listCache.set(key, { data: result, expiresAt: now + this.LIST_CACHE_TTL_MS });
         return result;
       }
@@ -254,7 +319,7 @@ class GoogleDriveService {
 
       const files = response.data.files ?? [];
       items = files
-        .filter((file) => file.mimeType && MEDIA_MIME_TYPES.some((mime) => file.mimeType?.startsWith(mime.split("/")[0])))
+        .filter((file) => !!file.id && file.mimeType && MEDIA_MIME_TYPES.some((mime) => file.mimeType?.startsWith(mime.split("/")[0])))
         .map((file) => {
           const isVideo = file.mimeType?.startsWith("video");
           const id = file.id ?? "";

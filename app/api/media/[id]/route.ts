@@ -14,7 +14,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const streamUrl = await googleDriveService.generateStreamUrl(id);
     const thumbnail = await googleDriveService.generateThumbnail(id);
 
-    return NextResponse.json({ ...metadata, streamUrl, thumbnail });
+    return NextResponse.json(
+      { ...metadata, streamUrl, thumbnail },
+      {
+        headers: {
+          // Cache metadata at the CDN; safe because Drive IDs are immutable for our use-case
+          "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800",
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to fetch media metadata", error);
     return NextResponse.json({ error: "Unable to fetch media metadata" }, { status: 500 });
