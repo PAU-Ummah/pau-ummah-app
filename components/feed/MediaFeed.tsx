@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { MEDIA_FILTERS } from "@/lib/constants";
 import type { EventCategory, MediaItem as MediaItemType } from "@/types";
 import { useMediaFeed } from "@/lib/hooks/useMediaFeed";
 import { MediaItem } from "@/components/feed/MediaItem";
-import { StoriesBar } from "@/components/feed/StoriesBar";
 import { FilterPills } from "@/components/mosque/FilterPills";
 
 export function MediaFeed() {
@@ -13,6 +13,7 @@ export function MediaFeed() {
   const { mediaItems, hasMore, loadMore, likeMedia, isLoading } = useMediaFeed({ category });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [attemptedLoadMore, setAttemptedLoadMore] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (!sentinelRef.current) return;
@@ -33,19 +34,62 @@ export function MediaFeed() {
   return (
     <div className="flex h-screen flex-col bg-black text-white pb-[env(safe-area-inset-bottom)]">
       <div className="px-4 pt-4 md:px-6 md:pt-8">
-        <h1 className="text-2xl font-semibold md:text-3xl">PAU Media Moments</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold md:text-3xl">PAU Media Moments</h1>
+          {/* Mobile filter trigger */}
+          <button
+            type="button"
+            onClick={() => setShowFilters(true)}
+            className="md:hidden inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs text-white backdrop-blur hover:bg-white/10"
+            aria-label="Open filters"
+          >
+            <Menu className="h-4 w-4" /> Filters
+          </button>
+        </div>
         <p className="mt-2 text-xs text-white/70 md:text-sm">
           Swipe through reflections from recent programmes, student initiatives, and joyful gatherings.
         </p>
-        <div className="mt-4 md:mt-6">
-          <StoriesBar />
-        </div>
-        <div className="mt-3 md:mt-4">
+        {/* Desktop/Tablet: regular filter pills */}
+        <div className="mt-3 hidden md:mt-4 md:block">
           <FilterPills filters={MEDIA_FILTERS} active={category} onChange={setCategory} />
         </div>
       </div>
 
-      <div className="relative mt-4 flex-1 overflow-y-auto snap-y snap-mandatory pb-24 [padding-bottom:env(safe-area-inset-bottom)]">
+      {/* Mobile Filters Bottom Sheet */}
+      {showFilters ? (
+        <div className="md:hidden">
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowFilters(false)}
+            aria-hidden
+          />
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border border-white/10 bg-zinc-900/95 p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-white/90">Filters</span>
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10"
+                aria-label="Close filters"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <FilterPills
+              filters={MEDIA_FILTERS}
+              active={category}
+              onChange={(val) => {
+                setCategory(val);
+                setShowFilters(false);
+              }}
+              variant="compact"
+              className=""
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="relative mt-4 flex-1 overflow-y-auto touch-pan-y snap-y snap-mandatory snap-always pb-24 [padding-bottom:env(safe-area-inset-bottom)]">
         <div className="flex flex-col">
           {isLoading && combinedItems.length === 0 ? (
             <div className="flex h-64 items-center justify-center text-white/70">Loading media…</div>
@@ -56,7 +100,7 @@ export function MediaFeed() {
               {combinedItems.map((item) => (
                 <MediaItem key={item.id} item={item} onLike={likeMedia} />
               ))}
-              <div ref={sentinelRef} className="h-24" />
+              <div ref={sentinelRef} className="h-24 snap-none" />
             </>
           )}
         </div>

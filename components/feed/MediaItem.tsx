@@ -30,7 +30,7 @@ export function MediaItem({ item, onLike }: MediaItemProps) {
   }, [item.id, onLike]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // Do not capture pointer to avoid blocking vertical scroll.
     pointers.current.set(event.pointerId, event.nativeEvent);
   };
 
@@ -59,7 +59,7 @@ export function MediaItem({ item, onLike }: MediaItemProps) {
   };
 
   return (
-    <div ref={ref} className="relative min-h-[100svh] w-full snap-center overflow-hidden pb-[env(safe-area-inset-bottom)]">
+    <div ref={ref} className="relative min-h-[100svh] w-full snap-start snap-always overflow-hidden pb-[env(safe-area-inset-bottom)]">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/30 to-black" />
       <div className="flex h-full items-center justify-center px-3 md:px-0">
         <div
@@ -70,7 +70,7 @@ export function MediaItem({ item, onLike }: MediaItemProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          style={{ touchAction: "none" }}
+          style={{ touchAction: "pan-y pinch-zoom" }}
         >
           {item.type === "video" ? (
             <MediaPlayer src={item.url} poster={item.thumbnail} isActive={isVisible} />
@@ -84,7 +84,7 @@ export function MediaItem({ item, onLike }: MediaItemProps) {
             </motion.div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
 
           <div className="absolute bottom-16 left-3 right-20 space-y-3 text-white md:bottom-20 md:left-4 md:right-24 md:space-y-4">
             <div>
