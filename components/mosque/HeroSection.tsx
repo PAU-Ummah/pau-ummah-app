@@ -48,6 +48,9 @@ export function HeroSection() {
             <Button size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10" asChild>
               <Link href="#upcoming-events">See Upcoming Events</Link>
             </Button>
+            <Button size="lg" variant="secondary" className="bg-[var(--brand-secondary)] text-white hover:opacity-90" asChild>
+              <Link href="/feed">Explore Media Feed</Link>
+            </Button>
           </div>
           <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-3 sm:gap-6">
             {HERO_STATS.map((stat) => (

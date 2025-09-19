@@ -7,6 +7,8 @@ import type { EventCategory, MediaItem as MediaItemType } from "@/types";
 import { useMediaFeed } from "@/lib/hooks/useMediaFeed";
 import { MediaItem } from "@/components/feed/MediaItem";
 import { FilterPills } from "@/components/mosque/FilterPills";
+import Link from "next/link";
+import Image from "next/image";
 
 export function MediaFeed() {
   const [category, setCategory] = useState<EventCategory | "all">("all");
@@ -41,7 +43,19 @@ export function MediaFeed() {
     <div className="flex h-screen flex-col bg-black text-white pb-[env(safe-area-inset-bottom)]">
       <div className="px-4 pt-4 md:px-6 md:pt-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold md:text-3xl">PAU Media Moments</h1>
+          <div className="flex items-center gap-3 md:gap-4">
+          <Link href="/" aria-label="Go to Home" className="shrink-0 hover:opacity-90 active:opacity-80">
+              <Image
+                src="/logo.jpg"
+                alt="PAU Muslim Ummah Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-full object-cover md:h-10 md:w-10"
+                priority={false}
+              />
+            </Link>
+            <h1 className="text-2xl font-semibold md:text-3xl">PAU Muslim Ummah Moments</h1>
+          </div>
           {/* Mobile filter trigger */}
           <button
             type="button"
