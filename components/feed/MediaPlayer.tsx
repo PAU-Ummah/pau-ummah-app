@@ -53,8 +53,10 @@ export function MediaPlayer({ src, poster, isActive, onProgress }: MediaPlayerPr
     <div className="relative h-full w-full overflow-hidden rounded-3xl bg-black">
       <video
         ref={videoRef}
-        src={src}
+        // Only assign src when active to avoid fetching video data offscreen
+        src={isActive ? src : undefined}
         poster={poster}
+        preload="metadata"
         loop
         playsInline
         muted={muted}

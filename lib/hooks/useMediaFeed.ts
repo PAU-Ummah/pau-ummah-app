@@ -5,6 +5,7 @@ import useSWRInfinite from "swr/infinite";
 import type { MediaFeedResponse, MediaItem } from "@/types";
 import { wait } from "@/lib/utils";
 
+// Each load should return 20 items
 const PAGE_SIZE = 20;
 
 const fetcher = async (url: string) => {
@@ -12,7 +13,8 @@ const fetcher = async (url: string) => {
     headers: {
       "Content-Type": "application/json",
     },
-    cache: "no-cache",
+    // Allow browser/request caching defaults; API layer maintains its own short-lived cache.
+    keepalive: true,
   });
 
   if (!response.ok) {
@@ -57,12 +59,22 @@ export function useMediaFeed({ category }: UseMediaFeedOptions = {}) {
     revalidateOnFocus: false,
     revalidateIfStale: true,
     persistSize: true,
+    // Avoid refetching first page immediately after mount to improve TTI
+    revalidateFirstPage: false,
   });
 
-  const mediaItems = useMemo<MediaItem[]>(
-    () => data?.flatMap((page) => page.items) ?? [],
-    [data],
-  );
+  const mediaItems = useMemo<MediaItem[]>(() => {
+    const flat = data?.flatMap((page) => page.items) ?? [];
+    const seen = new Set<string>();
+    const uniq: MediaItem[] = [];
+    for (const it of flat) {
+      if (!seen.has(it.id)) {
+        seen.add(it.id);
+        uniq.push(it);
+      }
+    }
+    return uniq;
+  }, [data]);
 
   const hasMore = Boolean(data?.[data.length - 1]?.nextPageToken);
   const prefetchedTokens = useRef<Set<string>>(new Set());
@@ -73,8 +85,11 @@ export function useMediaFeed({ category }: UseMediaFeedOptions = {}) {
 
   const loadMore = useCallback(async () => {
     if (isLoading || isValidating || !hasMore) return;
-    await setSize(size + 1);
-  }, [hasMore, isLoading, isValidating, setSize, size]);
+    // If prefetch already appended a page (data.length > size), advance to that length instead of refetching
+    const currentLength = data?.length ?? size;
+    const target = Math.max(size + 1, currentLength);
+    await setSize(target);
+  }, [data?.length, hasMore, isLoading, isValidating, setSize, size]);
 
   const prefetchNext = useCallback(async () => {
     if (!hasMore) return;

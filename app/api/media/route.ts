@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result, {
       headers: {
-        // cache at the CDN for a short period, allow SWR
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        // Cache at CDN for 3 minutes and allow 10 minutes stale while revalidating
+        "Cache-Control": "public, s-maxage=180, stale-while-revalidate=600",
       },
     });
   } catch (error) {

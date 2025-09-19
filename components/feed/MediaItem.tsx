@@ -12,9 +12,11 @@ import { useIntersection } from "@/lib/hooks/useIntersection";
 interface MediaItemProps {
   item: MediaItemType;
   onLike: (id: string) => void;
+  // Mark items near the top as priority to speed up LCP
+  priority?: boolean;
 }
 
-export function MediaItem({ item, onLike }: MediaItemProps) {
+export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { isVisible, ref } = useIntersection<HTMLDivElement>({
     threshold: 0.6,
@@ -80,7 +82,16 @@ export function MediaItem({ item, onLike }: MediaItemProps) {
               transition={{ type: "spring", stiffness: 120, damping: 18 }}
               className="relative h-full w-full"
             >
-              <Image src={item.url} alt={item.title} fill className="object-cover" sizes="420px" />
+              <Image
+                src={item.url}
+                alt={item.title}
+                fill
+                className="object-cover"
+                sizes="420px"
+                priority={priority}
+                fetchPriority={priority ? "high" : "auto"}
+                quality={75}
+              />
             </motion.div>
           )}
 
