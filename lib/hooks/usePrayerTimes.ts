@@ -3,8 +3,6 @@ import { addDays, differenceInSeconds, isAfter, isBefore } from 'date-fns';
 import type { CountdownState, PrayerSchedule } from '@/types';
 import { getTodaysPrayerTimes } from '../prayerTimes';
 
-const TIME_FORMAT = 'HH:mm';
-
 const parsePrayerTime = (time: string, reference: Date) => {
   const [hours, minutes] = time.split(':').map(Number);
   const date = new Date(reference);
