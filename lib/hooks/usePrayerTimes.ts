@@ -1,85 +1,112 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  addDays,
-  differenceInSeconds,
-  format,
-  isAfter,
-  isBefore,
-  parse,
-} from "date-fns";
-import type { CountdownState, PrayerSchedule } from "@/types";
+import { useEffect, useMemo, useState } from 'react';
+import { addDays, differenceInSeconds, isAfter, isBefore } from 'date-fns';
+import type { CountdownState, PrayerSchedule } from '@/types';
+import { getTodaysPrayerTimes } from '../prayerTimes';
 
-const TIME_FORMAT = "HH:mm";
+const TIME_FORMAT = 'HH:mm';
 
-const parsePrayerTime = (time: string, reference: Date) =>
-  parse(time, TIME_FORMAT, reference);
+const parsePrayerTime = (time: string, reference: Date) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const date = new Date(reference);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
 
 const buildScheduleWithDates = (schedule: PrayerSchedule[], reference: Date) =>
   schedule.map((item) => ({
     ...item,
-    date: format(parsePrayerTime(item.callToPrayer, reference), "yyyy-MM-dd'T'HH:mm:ssXXX"),
+    date: parsePrayerTime(item.callToPrayer, reference).toISOString(),
   }));
 
-export const usePrayerTimes = (schedule: PrayerSchedule[]) => {
-  const [state, setState] = useState<CountdownState>({});
+export interface UsePrayerTimesReturn {
+  state: CountdownState;
+  todaysSchedule: PrayerSchedule[];
+  scheduleWithDates: Array<PrayerSchedule & { date: string }>;
+}
 
-  const scheduleWithDates = useMemo(() => buildScheduleWithDates(schedule, new Date()), [schedule]);
+export const usePrayerTimes = (staticSchedule: PrayerSchedule[]): UsePrayerTimesReturn => {
+  const [state, setState] = useState<CountdownState>({});
+  
+  // Get today's prayer times (calculated dynamically)
+  const todaysSchedule = useMemo(() => {
+    try {
+      return getTodaysPrayerTimes();
+    } catch (error) {
+      console.error('Error getting prayer times, falling back to static schedule', error);
+      return staticSchedule;
+    }
+  }, [staticSchedule]);
+
+  const scheduleWithDates = useMemo(
+    () => buildScheduleWithDates(todaysSchedule, new Date()),
+    [todaysSchedule]
+  );
+
 
   useEffect(() => {
     const updateState = () => {
       const now = new Date();
-      const enhanced = schedule.map((item) => ({
+      
+      // Create enhanced schedule with parsed dates
+      const enhanced = todaysSchedule.map((item) => ({
         item,
         start: parsePrayerTime(item.callToPrayer, now),
         congregation: parsePrayerTime(item.congregation, now),
       }));
 
+
+      // Find the current prayer time slot
       const currentEnhancedIndex = enhanced.findIndex((entry, index) => {
         const nextEntry = enhanced[index + 1];
         if (!nextEntry) {
           return isAfter(now, entry.start);
         }
-        return isAfter(now, entry.start) && isBefore(now, nextEntry.start);
+        const isAfterStart = isAfter(now, entry.start);
+        const isBeforeNext = isBefore(now, nextEntry.start);
+        return isAfterStart && isBeforeNext;
       });
 
+      // Find the next prayer time
       const nextEnhanced =
         enhanced.find((entry) => isAfter(entry.start, now)) ?? {
-          item: schedule[0],
-          start: parsePrayerTime(schedule[0].callToPrayer, addDays(now, 1)),
-          congregation: parsePrayerTime(schedule[0].congregation, addDays(now, 1)),
+          // If no future prayer found today, use first prayer of next day
+          item: todaysSchedule[0],
+          start: addDays(parsePrayerTime(todaysSchedule[0].callToPrayer, now), 1),
+          congregation: addDays(parsePrayerTime(todaysSchedule[0].congregation, now), 1),
         };
 
+      // Get current prayer or previous day's last prayer if before Fajr
       const currentEnhanced =
         currentEnhancedIndex !== -1
           ? enhanced[currentEnhancedIndex]
           : {
-              item: schedule[schedule.length - 1],
-              start: parsePrayerTime(
-                schedule[schedule.length - 1].callToPrayer,
-                addDays(now, -1),
+              item: todaysSchedule[todaysSchedule.length - 1],
+              start: addDays(
+                parsePrayerTime(todaysSchedule[todaysSchedule.length - 1].callToPrayer, now),
+                -1,
               ),
-              congregation: parsePrayerTime(
-                schedule[schedule.length - 1].congregation,
-                addDays(now, -1),
+              congregation: addDays(
+                parsePrayerTime(todaysSchedule[todaysSchedule.length - 1].congregation, now),
+                -1,
               ),
             };
 
       const current = currentEnhanced.item;
       const next = nextEnhanced.item;
-
       const nextStart = nextEnhanced.start;
       const previousStart = currentEnhanced.start;
 
+      // Calculate time until next prayer
       const secondsToNext = differenceInSeconds(nextStart, now);
       const totalWindow = differenceInSeconds(nextStart, previousStart);
-      const progress = current && totalWindow > 0 ? 1 - secondsToNext / totalWindow : 0;
+      const progress = totalWindow > 0 ? 1 - secondsToNext / totalWindow : 0;
 
       const hours = Math.floor(secondsToNext / 3600);
       const minutes = Math.floor((secondsToNext % 3600) / 60);
       const seconds = secondsToNext % 60;
 
       setState({
-        currentPrayer: current ?? schedule[0],
+        currentPrayer: current,
         nextPrayer: next,
         timeUntilNext: {
           hours,
@@ -94,10 +121,7 @@ export const usePrayerTimes = (schedule: PrayerSchedule[]) => {
     const timer = setInterval(updateState, 1000);
 
     return () => clearInterval(timer);
-  }, [schedule]);
+  }, [todaysSchedule]);
 
-  return {
-    state,
-    scheduleWithDates,
-  };
+  return { state, todaysSchedule, scheduleWithDates };
 };
