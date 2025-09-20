@@ -4,12 +4,11 @@ import { HeroSection } from "@/components/mosque/HeroSection";
 import { PrayerTimings } from "@/components/mosque/PrayerTimings";
 import { WhatWeDo } from "@/components/mosque/WhatWeDo";
 import { PastEvents } from "@/components/mosque/PastEvents";
-import { UpcomingEvents } from "@/components/mosque/UpcomingEvents";
 import { CallToAction } from "@/components/mosque/CallToAction";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col bg-background">
+    <main className="relative flex min-h-screen flex-col bg-background">
       <ContactBar />
       <Navigation />
       <HeroSection />
@@ -64,7 +63,6 @@ export default function Home() {
       <PrayerTimings />
       <WhatWeDo />
       <PastEvents />
-      <UpcomingEvents />
       <CallToAction />
     </main>
   );

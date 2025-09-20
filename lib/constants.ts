@@ -11,7 +11,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: "Prayer Times", href: "#prayer-times" },
   { label: "What We Do", href: "#services" },
   { label: "Past Events", href: "#past-events" },
-  { label: "Upcoming Events", href: "#upcoming-events" },
   { label: "Contact", href: "#contact" },
 ];
 

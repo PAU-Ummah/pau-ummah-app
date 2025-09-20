@@ -4,9 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AlignJustify, X } from "lucide-react";
+import { AlignJustify } from "lucide-react";
 import { NAVIGATION_ITEMS } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetClose, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DonateModal } from "@/components/mosque/DonateModal";
@@ -116,17 +115,10 @@ export function Navigation() {
               <span className="sr-only">Toggle menu</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[85vw] max-w-sm">
+          <SheetContent side="right" className="w-[85vw] max-w-sm pt-16">
             <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-            <div className="mt-12 flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-[var(--brand-primary)]">Navigation</h3>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full border border-slate-200">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </SheetClose>
-              </div>
+            <div className="flex flex-col gap-6">
+              <h3 className="text-lg font-semibold text-[var(--brand-primary)]">Navigation</h3>
               <div className="flex flex-col gap-4 text-left">
                 {NAVIGATION_ITEMS.map((item) => (
                   <SheetClose asChild key={item.href}>
@@ -147,9 +139,9 @@ export function Navigation() {
               </div>
               <div>
                 <DonateModal
-                  accountName="PAU Mosque"
-                  accountNumber="0000000000"
-                  bankName="Your Bank"
+                  accountName="HAMEEDAH OYINDASOLA ALLI-KAMAL"
+                  accountNumber="4235303561"
+                  bankName="Zenith Bank PIc"
                   label="Donate Now"
                   triggerVariant="primary"
                   triggerClassName="w-full"
