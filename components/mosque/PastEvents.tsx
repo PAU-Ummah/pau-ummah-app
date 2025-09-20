@@ -1,28 +1,34 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { MEDIA_FILTERS } from "@/lib/constants";
+import type { EventCategory, MediaItem } from "@/types";
+import { FilterPills } from "@/components/mosque/FilterPills";
 import { AnimatedCard } from "@/components/mosque/AnimatedCard";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useMemo } from "react";
 import { useMediaFeed } from "@/lib/hooks/useMediaFeed";
-import type { MediaItem } from "@/types";
 
 export function PastEvents() {
-  const { mediaItems, isLoading } = useMediaFeed({ category: "all" });
+  const [activeCategory, setActiveCategory] = useState<EventCategory | "all">("all");
+  const { mediaItems, isLoading } = useMediaFeed({ category: activeCategory });
   const itemsToShow = useMemo(() => mediaItems.slice(0, 6), [mediaItems]);
   return (
     <section id="past-events" className="bg-white py-16 md:py-20">
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-        <div className="flex flex-col gap-4 text-left">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--brand-secondary)]">Past highlights</p>
-          <h2 className="text-3xl font-bold text-[var(--brand-primary)] sm:text-4xl">
-            Moments that shaped our community
-          </h2>
-          <p className="max-w-2xl text-base text-slate-600">
-            Relive powerful gatherings filled with dua, learning, and service. Each event strengthens the bonds of our Ummah on
-            campus.
-          </p>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between md:gap-6">
+          <div className="space-y-4">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--brand-secondary)]">Past highlights</p>
+            <h2 className="text-3xl font-bold text-[var(--brand-primary)] sm:text-4xl">
+              Moments that shaped our community
+            </h2>
+            <p className="max-w-2xl text-base text-slate-600">
+              Relive powerful gatherings filled with dua, learning, and service. Each event strengthens the bonds of our Ummah on
+              campus.
+            </p>
+          </div>
+          <FilterPills filters={MEDIA_FILTERS} active={activeCategory} onChange={setActiveCategory} />
         </div>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-12 md:gap-6">

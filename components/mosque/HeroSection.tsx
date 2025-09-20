@@ -45,10 +45,7 @@ export function HeroSection() {
             <Button size="lg" variant="default" asChild>
               <Link href="#prayer-times">View Prayer Timings</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white/60 text-white hover:bg-white/10" asChild>
-              <Link href="#upcoming-events">See Upcoming Events</Link>
-            </Button>
-            <Button size="lg" variant="secondary" className="bg-[var(--brand-secondary)] text-white hover:opacity-90" asChild>
+            <Button size="lg" variant="outline" className="border-white/60 bg-transparent text-black hover:bg-white/10 hover:text-white transition-colors duration-200" asChild>
               <Link href="/feed">Explore Media Feed</Link>
             </Button>
           </div>
