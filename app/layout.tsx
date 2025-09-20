@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import { PageProgressBar } from "@/components/mosque/PageProgressBar";
 import { FloatingButtons } from "@/components/mosque/FloatingButtons";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ServiceWorkerRegistration } from "@/components/common/ServiceWorkerRegistration";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -37,13 +38,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${montserrat.variable} bg-background font-sans text-foreground antialiased`}>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${montserrat.variable} font-sans antialiased`}>
         <Providers>
-          <TooltipProvider delayDuration={200}>
+          <TooltipProvider>
             <PageProgressBar />
             {children}
             <FloatingButtons />
+            <ServiceWorkerRegistration />
           </TooltipProvider>
         </Providers>
       </body>

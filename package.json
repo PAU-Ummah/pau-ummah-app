@@ -25,6 +25,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@videojs/http-streaming": "^3.17.2",
     "adhan": "^4.4.3",
     "axios": "^1.12.2",
     "class-variance-authority": "^0.7.1",
@@ -32,6 +33,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.13",
     "googleapis": "^159.0.0",
+    "hls.js": "^1.6.12",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "react": "19.1.0",
@@ -39,7 +41,8 @@
     "react-use": "^17.6.0",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "video.js": "^8.23.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
