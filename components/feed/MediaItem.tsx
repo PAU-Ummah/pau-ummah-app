@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { MediaItem as MediaItemType } from "@/types";
-import { MediaPlayer } from "@/components/feed/MediaPlayer";
+import { AdaptiveVideoPlayer } from "@/components/feed/AdaptiveVideoPlayer";
 import { EngagementButton } from "@/components/feed/EngagementButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIntersection } from "@/lib/hooks/useIntersection";
@@ -75,7 +75,14 @@ export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
           style={{ touchAction: "pan-y pinch-zoom" }}
         >
           {item.type === "video" ? (
-            <MediaPlayer src={item.url} poster={item.thumbnail} isActive={isVisible} />
+            <AdaptiveVideoPlayer 
+              src={item.url} 
+              poster={item.thumbnail} 
+              isActive={isVisible} 
+              onProgress={() => {
+                // Progress updates can be handled here if needed in the future
+              }}
+            />
           ) : (
             <motion.div
               animate={{ scale }}
