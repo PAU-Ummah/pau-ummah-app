@@ -1,4 +1,5 @@
 import { google, calendar_v3 } from "googleapis";
+import { cookies } from 'next/headers';
 
 interface CalendarEvent {
   summary: string;
@@ -28,33 +29,40 @@ class GoogleCalendarService {
   private client: calendar_v3.Calendar | null = null;
   private auth: unknown | null = null;
 
-  private createAuthClient(): unknown {
-    const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  private createOAuthClient(accessToken: string, refreshToken?: string): unknown {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/google/callback`;
 
-    if (!email || !privateKey) {
-      throw new Error("Google service account credentials are not configured");
+    if (!clientId || !clientSecret) {
+      throw new Error("Google OAuth credentials are not configured");
     }
 
-    return new google.auth.JWT({
-      email,
-      key: privateKey,
-      scopes: [
-        "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/calendar.events"
-      ],
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    
+    oauth2Client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
     });
+
+    return oauth2Client;
   }
 
-  private async getAuthClient(): Promise<unknown> {
-    if (this.auth) return this.auth;
-    this.auth = this.createAuthClient();
-    return this.auth;
+  private async getAuthClientFromCookies(): Promise<unknown> {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('google_access_token')?.value;
+    const refreshToken = cookieStore.get('google_refresh_token')?.value;
+
+    if (!accessToken) {
+      throw new Error("No valid Google authentication found. Please authenticate first.");
+    }
+
+    return this.createOAuthClient(accessToken, refreshToken);
   }
 
   private async getClient(): Promise<calendar_v3.Calendar> {
     if (this.client) return this.client;
-    const auth = (await this.getAuthClient()) as unknown as CalendarAuth;
+    const auth = (await this.getAuthClientFromCookies()) as unknown as CalendarAuth;
     this.client = google.calendar({ version: "v3", auth });
     return this.client;
   }

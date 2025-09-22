@@ -68,7 +68,7 @@ export function useCalendarSubscription() {
 
   const testCalendarAccess = async () => {
     try {
-      const response = await fetch('/api/calendar/subscribe', {
+      const response = await fetch('/api/calendar/test-access', {
         method: 'GET',
       });
 
