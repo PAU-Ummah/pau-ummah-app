@@ -173,6 +173,19 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
                     </p>
                   </div>
                   
+                  {/* In-Product Privacy Notice */}
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
+                    <h5 className="font-semibold text-blue-800 mb-2">Privacy Notice</h5>
+                    <p className="text-blue-700 text-sm">
+                      <strong>Important:</strong> By connecting your Google Calendar, you authorize us to create prayer time events in your personal calendar. 
+                      We will only create new events and will not access, modify, or delete your existing calendar data. 
+                      You can disconnect this integration at any time through your Google account settings.
+                    </p>
+                    <p className="text-blue-600 text-xs mt-2">
+                      For more information, please read our <a href="/policy" className="underline hover:no-underline">Privacy Policy</a>.
+                    </p>
+                  </div>
+                  
                   {authError && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex items-center gap-2 text-red-700">

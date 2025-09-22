@@ -5,6 +5,7 @@ import { PrayerTimings } from "@/components/mosque/PrayerTimings";
 import { WhatWeDo } from "@/components/mosque/WhatWeDo";
 import { PastEvents } from "@/components/mosque/PastEvents";
 import { CallToAction } from "@/components/mosque/CallToAction";
+import { Footer } from "@/components/mosque/Footer";
 
 export default function Home() {
   return (
@@ -64,6 +65,7 @@ export default function Home() {
       <WhatWeDo />
       <PastEvents />
       <CallToAction />
+      <Footer />
     </main>
   );
 }
