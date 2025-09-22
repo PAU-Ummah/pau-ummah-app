@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Calendar, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, Loader2, LogIn, LogOut } from 'lucide-react';
 import { useCalendarSubscription } from '@/lib/hooks/useCalendarSubscription';
+import { useGoogleAuth } from '@/lib/hooks/useGoogleAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CalendarSubscriptionProps {
@@ -15,6 +17,15 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [calendarAccess, setCalendarAccess] = useState<boolean | null>(null);
+  
+  const { 
+    isAuthenticated,
+    userInfo,
+    isLoading: authLoading,
+    error: authError,
+    authenticate,
+    logout
+  } = useGoogleAuth();
   
   const { 
     isSubscribing, 
@@ -36,14 +47,18 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
     setEndDate(nextMonth.toISOString().split('T')[0]);
   }, []);
 
-  // Test calendar access on component mount
+  // Test calendar access when authenticated
   useEffect(() => {
-    const testAccess = async () => {
-      const hasAccess = await testCalendarAccess();
-      setCalendarAccess(hasAccess);
-    };
-    testAccess();
-  }, [testCalendarAccess]);
+    if (isAuthenticated) {
+      const testAccess = async () => {
+        const hasAccess = await testCalendarAccess();
+        setCalendarAccess(hasAccess);
+      };
+      testAccess();
+    } else {
+      setCalendarAccess(false);
+    }
+  }, [isAuthenticated, testCalendarAccess]);
 
   const handleSubscribe = async () => {
     if (!startDate || !endDate) return;
@@ -73,10 +88,16 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
       <Button
         onClick={() => setShowModal(true)}
         className={`bg-[var(--brand-secondary)] hover:bg-[var(--brand-secondary)]/90 text-white ${className}`}
-        disabled={calendarAccess === false}
+        disabled={authLoading}
       >
-        <Calendar className="w-4 h-4 mr-2" />
-        {calendarAccess === false ? 'Calendar Unavailable' : 'Subscribe'}
+        {authLoading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : isAuthenticated ? (
+          <Calendar className="w-4 h-4 mr-2" />
+        ) : (
+          <LogIn className="w-4 h-4 mr-2" />
+        )}
+        {authLoading ? 'Loading...' : isAuthenticated ? 'Subscribe to Calendar' : 'Connect Google Calendar'}
       </Button>
 
       <AnimatePresence>
@@ -97,7 +118,7 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-[var(--brand-primary)]">
-                  Subscribe to Prayer Times
+                  {isAuthenticated ? 'Subscribe to Prayer Times' : 'Connect Google Calendar'}
                 </h3>
                 <Button
                   variant="ghost"
@@ -109,18 +130,90 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
                 </Button>
               </div>
 
-              {calendarAccess === false && (
+              {isAuthenticated && userInfo && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {userInfo.picture && (
+                      <Image 
+                        src={userInfo.picture} 
+                        alt={userInfo.name}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-800">
+                        Connected as {userInfo.name}
+                      </p>
+                      <p className="text-xs text-green-600">{userInfo.email}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={logout}
+                      className="text-green-700 hover:text-green-800"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!isAuthenticated && (
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <Calendar className="w-16 h-16 mx-auto text-slate-400 mb-4" />
+                    <h4 className="text-lg font-medium text-slate-800 mb-2">
+                      Connect Your Google Calendar
+                    </h4>
+                    <p className="text-sm text-slate-600 mb-6">
+                      To add prayer times to your calendar, you need to connect your Google account. 
+                      This will allow us to create events in your personal Google Calendar.
+                    </p>
+                  </div>
+                  
+                  {authError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-red-700">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-sm">{authError}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Button
+                    onClick={authenticate}
+                    disabled={authLoading}
+                    className="bg-[var(--brand-secondary)] hover:bg-[var(--brand-secondary)]/90 text-white"
+                  >
+                    {authLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Connect Google Calendar
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {isAuthenticated && calendarAccess === false && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2 text-red-700">
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-sm">
-                      Google Calendar access is not configured. Please contact the administrator.
+                      Unable to access your Google Calendar. Please try reconnecting.
                     </span>
                   </div>
                 </div>
               )}
 
-              {calendarAccess === null && (
+              {isAuthenticated && calendarAccess === null && (
                 <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                   <div className="flex items-center gap-2 text-slate-600">
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,7 +222,7 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
                 </div>
               )}
 
-              {calendarAccess === true && (
+              {isAuthenticated && calendarAccess === true && (
                 <>
                   <p className="text-sm text-slate-600 mb-4">
                     Add prayer times to your Google Calendar with automatic reminders for Adhan and Iqamah.

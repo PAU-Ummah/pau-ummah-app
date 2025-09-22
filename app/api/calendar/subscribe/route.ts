@@ -63,28 +63,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  try {
-    // Test calendar access
-    const result = await googleCalendarService.getCalendarList();
-    
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: 'Google Calendar access verified',
-        calendars: result.calendars?.length || 0,
-      });
-    } else {
-      return NextResponse.json(
-        { error: result.error || 'Failed to access Google Calendar' },
-        { status: 500 }
-      );
-    }
-  } catch (error) {
-    console.error('Calendar access test error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
