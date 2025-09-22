@@ -32,7 +32,8 @@ class GoogleCalendarService {
   private createOAuthClient(accessToken: string, refreshToken?: string): unknown {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://your-production-domain.com' : 'http://localhost:3000');
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl}/api/auth/google/callback`;
 
     if (!clientId || !clientSecret) {
       throw new Error("Google OAuth credentials are not configured");

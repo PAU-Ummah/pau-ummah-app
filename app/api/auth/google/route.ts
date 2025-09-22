@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/google/callback`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? 'https://your-production-domain.com' : 'http://localhost:3000');
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl}/api/auth/google/callback`;
 
     if (!clientId || !clientSecret) {
       return NextResponse.json(
@@ -29,7 +30,7 @@ export async function GET() {
       prompt: 'consent', // Force consent screen to get refresh token
       // Include privacy policy URL for OAuth consent screen
       state: JSON.stringify({
-        privacy_policy_url: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/policy`
+        privacy_policy_url: `${baseUrl}/policy`
       })
     });
 

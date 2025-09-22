@@ -23,14 +23,27 @@ Visit [http://localhost:3000](http://localhost:3000) to explore the application.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and populate the following values:
+Create a `.env.local` file and populate the following values:
 
 ```bash
-GOOGLE_SERVICE_ACCOUNT_EMAIL=
+# Google OAuth Configuration (REQUIRED for Calendar integration)
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_REDIRECT_URI=https://your-production-domain.com/api/auth/google/callback
+
+# Application URL (REQUIRED - use your production domain)
+NEXT_PUBLIC_API_URL=https://your-production-domain.com
+
+# Google Service Account (for Drive integration)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_DRIVE_FOLDER_ID=
-NEXT_PUBLIC_API_URL=http://localhost:3000
-REDIS_URL= # optional cache provider
+GOOGLE_DRIVE_FOLDER_ID=your_drive_folder_id_here
+
+# Optional: Redis URL for caching
+REDIS_URL=redis://localhost:6379
+
+# Environment
+NODE_ENV=production
 ```
 
 The Google service account must have access to the Drive folder specified by `GOOGLE_DRIVE_FOLDER_ID`.
