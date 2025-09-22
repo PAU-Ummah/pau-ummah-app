@@ -110,3 +110,12 @@ export interface PrayerScheduleResponse {
   meta: PrayerMeta;
   schedule: PrayerSchedule[];
 }
+
+export interface Event {
+  id: string;
+  name: string;
+  date: string;
+  startTime?: string; // ISO string for start time
+  endTime?: string; // ISO string for end time
+  attendees: string[]; // Array of person IDs
+}

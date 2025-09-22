@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/mosque/HeroSection";
 import { PrayerTimings } from "@/components/mosque/PrayerTimings";
 import { WhatWeDo } from "@/components/mosque/WhatWeDo";
 import { PastEvents } from "@/components/mosque/PastEvents";
+import { UpcomingEvents } from "@/components/mosque/UpcomingEvents";
 import { CallToAction } from "@/components/mosque/CallToAction";
 import { Footer } from "@/components/mosque/Footer";
 
@@ -64,6 +65,7 @@ export default function Home() {
       <PrayerTimings />
       <WhatWeDo />
       <PastEvents />
+      <UpcomingEvents />
       <CallToAction />
       <Footer />
     </main>
