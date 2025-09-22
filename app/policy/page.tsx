@@ -167,7 +167,7 @@ export default function PrivacyPolicyPage() {
               </h2>
               <div className="space-y-4 text-slate-700">
                 <p>
-                  Our application's use of information received from Google APIs will adhere to the 
+                  Our application&apos;s use of information received from Google APIs will adhere to the 
                   <a href="https://developers.google.com/terms/api-services-user-data-policy" 
                      className="text-[var(--brand-secondary)] hover:underline" 
                      target="_blank" 

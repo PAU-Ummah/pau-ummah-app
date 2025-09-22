@@ -11,7 +11,7 @@ export function Footer() {
               PAU Muslim Ummah
             </h3>
             <p className="text-slate-300 text-sm">
-              Pan Atlantic University's vibrant Muslim community, fostering faith, 
+               Pan Atlantic University&apos;s vibrant Muslim community, fostering faith,
               knowledge, and brotherhood.
             </p>
           </div>
