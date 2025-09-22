@@ -69,11 +69,24 @@ const getPrayerTimes = (): PrayerTime[] => {
         
         const callToPrayer = format(prayerTime, TIME_FORMAT);
         
+        // Special logic for Zuhr (Dhuhr) iqamah time
+        let congregation: string;
+        if (key === 'dhuhr') {
+          // If adhan time is 12:55 or later, iqamah is 1:05, otherwise 1:00
+          if (callToPrayer >= '12:55') {
+            congregation = '13:05'; // 1:05 PM
+          } else {
+            congregation = '13:00'; // 1:00 PM
+          }
+        } else {
+          congregation = addMinutesToTime(callToPrayer, 10); // 10 minutes after adhan for other prayers
+        }
+        
         return {
           name: key,
           displayName,
           callToPrayer,
-          congregation: addMinutesToTime(callToPrayer, 10), // 10 minutes after adhan
+          congregation,
         };
       } catch (error) {
         console.error(`Error getting time for ${key}:`, error);
@@ -96,7 +109,7 @@ export const getTodaysPrayerTimes = (): PrayerTime[] => {
     // Fallback to the original schedule if there's an error
     return [
       { name: 'fajr', displayName: 'Fajr', callToPrayer: '05:15', congregation: '05:25' },
-      { name: 'dhuhr', displayName: 'Dhuhr', callToPrayer: '12:45', congregation: '12:55' },
+      { name: 'dhuhr', displayName: 'Dhuhr', callToPrayer: '12:45', congregation: '13:00' }, // Updated to follow new logic
       { name: 'asr', displayName: 'Asr', callToPrayer: '15:45', congregation: '15:55' },
       { name: 'maghrib', displayName: 'Maghrib', callToPrayer: '18:32', congregation: '18:42' },
       { name: 'isha', displayName: 'Isha', callToPrayer: '19:55', congregation: '20:05' },

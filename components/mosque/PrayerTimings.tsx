@@ -3,6 +3,7 @@
 import { PRAYER_SCHEDULE } from "@/lib/constants";
 import { usePrayerTimes } from "@/lib/hooks/usePrayerTimes";
 import { CountdownTimer } from "@/components/mosque/CountdownTimer";
+import { CalendarSubscription } from "@/components/mosque/CalendarSubscription";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,9 @@ export function PrayerTimings() {
                     <span>Congregation</span>
                     <span className="font-semibold text-[var(--brand-primary)]">{nextPrayer.congregation}</span>
                   </div>
+                  <div className="mt-4 flex justify-center">
+                  <CalendarSubscription />
+                </div>
                   <div className="h-12"></div>
                 </div>
               </div>
