@@ -18,13 +18,13 @@ export async function POST(request: NextRequest) {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Validate date range (max 1 year)
-    const maxDays = 365;
+    // Validate date range (max 1 week due to changing salah times)
+    const maxDays = 7;
     const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysDiff > maxDays) {
       return NextResponse.json(
-        { error: `Date range cannot exceed ${maxDays} days` },
+        { error: `Date range cannot exceed ${maxDays} days. This limit ensures accurate prayer times as they change throughout the year.` },
         { status: 400 }
       );
     }

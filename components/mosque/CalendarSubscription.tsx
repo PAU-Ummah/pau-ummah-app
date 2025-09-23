@@ -37,14 +37,14 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
     resetState 
   } = useCalendarSubscription();
 
-  // Set default date range (next 30 days)
+  // Set default date range (next 7 days)
   useEffect(() => {
     const today = new Date();
-    const nextMonth = new Date(today);
-    nextMonth.setDate(today.getDate() + 30);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
     
     setStartDate(today.toISOString().split('T')[0]);
-    setEndDate(nextMonth.toISOString().split('T')[0]);
+    setEndDate(nextWeek.toISOString().split('T')[0]);
   }, []);
 
   // Test calendar access when authenticated
@@ -240,6 +240,26 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
                   <p className="text-sm text-slate-600 mb-4">
                     Add prayer times to your Google Calendar with automatic reminders for Adhan and Iqamah.
                   </p>
+                  
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <div className="text-blue-600 mt-0.5">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-800 mb-1">
+                          Maximum 7-day subscription period
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          Prayer times change throughout the year based on sunrise/sunset times. 
+                          To ensure accuracy, subscriptions are limited to one week. 
+                          You can create new subscriptions as needed.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="space-y-4">
                     <div>
@@ -265,7 +285,7 @@ export function CalendarSubscription({ className }: CalendarSubscriptionProps) {
                         onChange={(e) => setEndDate(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[var(--brand-secondary)] focus:border-transparent"
                         min={startDate}
-                        max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                        max={startDate ? new Date(new Date(startDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : ''}
                       />
                     </div>
 

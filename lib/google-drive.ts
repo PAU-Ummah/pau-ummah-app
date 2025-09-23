@@ -5,6 +5,8 @@ const MEDIA_MIME_TYPES = [
   "video/mp4",
   "video/webm",
   "video/quicktime",
+  "video/x-msvideo",
+  "video/x-ms-wmv",
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -224,8 +226,10 @@ class GoogleDriveService {
         sources = seededShuffle(sources, seed + 23);
 
         // To avoid too many API calls, cap the number of sources and items per source
-        const maxSources = Math.min(sources.length, Math.max(4, Math.ceil(pageSize / 3))); // e.g., up to ~6-8 for pageSize 20
+        // Allow more sources to be sampled to reach the target page size
+        const maxSources = Math.min(sources.length, Math.max(6, Math.ceil(pageSize / 2))); // e.g., up to ~10 for pageSize 20
         const perSource = Math.max(1, Math.ceil(pageSize / maxSources));
+        
 
         const allowed: EventCategory[] = ["education", "spiritual", "community", "charity", "youth", "volunteering"];
 
@@ -254,9 +258,14 @@ class GoogleDriveService {
           });
 
           const files = mediaRes.data.files ?? [];
+          
+          // For the first page, only slice if we have significantly more files than perSource
+          // This allows small folders to show all their content
+          const shouldSlice = pageIndex > 0 || files.length > perSource * 1.5;
+          
           // Deterministically shuffle within this folder, varying by seed + source index + page
           const filesShuffled = seededShuffle(files, seed + i * 101 + pageIndex * 1009);
-          const filesSliced = filesShuffled.slice(sliceOffset, sliceOffset + perSource);
+          const filesSliced = shouldSlice ? filesShuffled.slice(sliceOffset, sliceOffset + perSource) : filesShuffled;
 
           const mapped: MediaItem[] = filesSliced
             .filter((file) => !!file.id && file.mimeType && MEDIA_MIME_TYPES.some((mime) => file.mimeType?.startsWith(mime.split("/")[0])))
@@ -295,6 +304,8 @@ class GoogleDriveService {
         const finalItems = seededShuffle(collected, seed + 777).slice(0, pageSize);
         const nextToken = finalItems.length >= pageSize ? `${seed}:${pageIndex + 1}` : undefined;
         const result: MediaFeedResponse = { items: finalItems, nextPageToken: nextToken };
+        
+        
         this.listCache.set(key, { data: result, expiresAt: now + this.LIST_CACHE_TTL_MS });
         return result;
       }
@@ -347,6 +358,7 @@ class GoogleDriveService {
         items,
         nextPageToken: response.data.nextPageToken ?? undefined,
       };
+
 
       // store in cache
       this.listCache.set(key, { data: result, expiresAt: now + this.LIST_CACHE_TTL_MS });

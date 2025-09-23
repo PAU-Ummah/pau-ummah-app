@@ -20,6 +20,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Only images are supported by this endpoint" }, { status: 415 });
     }
 
+    // Handle HEIC/HEIF files - browsers don't support them natively
+    // For now, we'll serve them as-is and let the client handle the fallback
+    const isHeic = mimeType === "image/heic" || mimeType === "image/heif";
+
     const accessToken = await googleDriveService.getAccessToken();
     const driveUrl = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`;
 
@@ -34,15 +38,29 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     const headers = new Headers();
-    headers.set("Content-Type", mimeType);
-    // Pass through caching headers for better performance (adjust as needed)
-    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
-
-    // Optional: Content-Length if present
-    const len = res.headers.get("content-length");
-    if (len) headers.set("Content-Length", len);
-
-    return new NextResponse(res.body, { status: 200, headers });
+    
+    // For HEIC files, serve them as-is but with proper headers for download
+    if (isHeic) {
+      headers.set("Content-Type", mimeType);
+      headers.set("Content-Disposition", `inline; filename="${id}.heic"`);
+      headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+      
+      // Optional: Content-Length if present
+      const len = res.headers.get("content-length");
+      if (len) headers.set("Content-Length", len);
+      
+      return new NextResponse(res.body, { status: 200, headers });
+    } else {
+      // For regular images, serve as-is
+      headers.set("Content-Type", mimeType);
+      headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+      
+      // Optional: Content-Length if present
+      const len = res.headers.get("content-length");
+      if (len) headers.set("Content-Length", len);
+      
+      return new NextResponse(res.body, { status: 200, headers });
+    }
   } catch (error) {
     console.error("[stream] failed to stream file", error);
     return NextResponse.json({ error: "Internal error while streaming" }, { status: 500 });

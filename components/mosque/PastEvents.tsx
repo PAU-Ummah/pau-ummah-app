@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { MEDIA_FILTERS } from "@/lib/constants";
 import type { EventCategory, MediaItem } from "@/types";
 import { FilterPills } from "@/components/mosque/FilterPills";
@@ -61,10 +60,35 @@ export function PastEvents() {
                         <span>{item.type.toUpperCase()}</span>
                       </div>
                       {item.url ? (
-                        <Button variant="link" className="px-0 text-[var(--brand-secondary)]" asChild>
-                          <Link href={item.url} target="_blank" rel="noreferrer">
-                            View media
-                          </Link>
+                        <Button 
+                          variant="link" 
+                          className="px-0 text-[var(--brand-secondary)]"
+                          onClick={() => {
+                            // Open media in new tab with proper headers
+                            const newWindow = window.open('', '_blank');
+                            if (newWindow) {
+                              newWindow.document.write(`
+                                <html>
+                                  <head>
+                                    <title>${item.title}</title>
+                                    <style>
+                                      body { margin: 0; padding: 20px; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                                      img, video { max-width: 100%; max-height: 100vh; object-fit: contain; }
+                                    </style>
+                                  </head>
+                                  <body>
+                                    ${item.type === 'video' 
+                                      ? `<video controls autoplay><source src="${item.url}" type="video/mp4">Your browser does not support the video tag.</video>`
+                                      : `<img src="${item.url}" alt="${item.title}" />`
+                                    }
+                                  </body>
+                                </html>
+                              `);
+                              newWindow.document.close();
+                            }
+                          }}
+                        >
+                          View media
                         </Button>
                       ) : null}
                     </div>

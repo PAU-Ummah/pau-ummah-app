@@ -37,9 +37,19 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
+    // Also pause and reset the video element
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
   }, []);
 
-  // Initialize HLS.js
+  // Check if the video source is HLS format
+  const isHLS = useCallback((url: string) => {
+    return url.includes('.m3u8') || url.includes('application/vnd.apple.mpegurl');
+  }, []);
+
+  // Initialize video player (HLS or regular MP4)
   const initPlayer = useCallback(() => {
     if (!videoRef.current) return;
 
@@ -48,7 +58,10 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
       destroyPlayer();
     }
 
-    if (Hls.isSupported()) {
+    // Check if this is an HLS stream
+    if (isHLS(src) && Hls.isSupported()) {
+      // Use HLS.js for HLS streams
+      console.log('Using HLS.js for HLS stream:', src);
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -94,18 +107,31 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
           }
         }
       });
-    } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      // For Safari on iOS
+    } else if (isHLS(src) && videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      // For Safari on iOS with HLS
       videoRef.current.src = src;
       videoRef.current.addEventListener('loadedmetadata', () => {
         setIsLoading(false);
       });
+    } else {
+      // Regular MP4 video - use native HTML5 video
+      console.log('Using native HTML5 video player for:', src);
+      videoRef.current.src = src;
+      videoRef.current.addEventListener('loadedmetadata', () => {
+        console.log('Video metadata loaded successfully');
+        setIsLoading(false);
+      });
+      videoRef.current.addEventListener('error', (e) => {
+        console.error('Video error:', e);
+        setError(new Error('Failed to load video. Please check your connection.'));
+        setIsLoading(false);
+      });
     }
-  }, [src, destroyPlayer]);
+  }, [src, destroyPlayer, isHLS]);
 
-  // Handle quality change
+  // Handle quality change (only for HLS streams)
   const handleQualityChange = useCallback((quality: string) => {
-    if (!hlsRef.current) return;
+    if (!hlsRef.current || !isHLS(src)) return;
     
     if (quality === 'Auto') {
       hlsRef.current.currentLevel = -1; // Auto quality
@@ -118,7 +144,7 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
     
     setCurrentQuality(quality);
     setShowQualityMenu(false);
-  }, [qualityLevels]);
+  }, [qualityLevels, isHLS, src]);
 
   // Initialize/cleanup on mount/unmount
   useEffect(() => {
@@ -137,11 +163,19 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
     if (!video) return;
 
     if (isActive) {
-      video.play().catch(err => {
-        console.error('Playback failed:', err);
-        setError(new Error('Playback failed. Please try again.'));
-      });
+      // Use a small delay to avoid race conditions
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          // Ignore AbortError as it's expected when switching videos
+          if (err.name !== 'AbortError') {
+            console.error('Playback failed:', err);
+            setError(new Error('Playback failed. Please try again.'));
+          }
+        });
+      }
     } else {
+      // Pause immediately without waiting
       video.pause();
       if (!video.paused) {
         video.currentTime = 0;
@@ -262,7 +296,7 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
             {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
           </button>
           
-          {qualityLevels.length > 1 && (
+          {qualityLevels.length > 1 && isHLS(src) && (
             <div className="relative">
               <button
                 onClick={(e) => {
