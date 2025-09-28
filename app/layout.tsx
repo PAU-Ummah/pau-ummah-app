@@ -5,7 +5,6 @@ import { Providers } from "@/components/providers";
 import { PageProgressBar } from "@/components/mosque/PageProgressBar";
 import { FloatingButtons } from "@/components/mosque/FloatingButtons";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ServiceWorkerRegistration } from "@/components/common/ServiceWorkerRegistration";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -45,7 +44,6 @@ export default function RootLayout({
             <PageProgressBar />
             {children}
             <FloatingButtons />
-            <ServiceWorkerRegistration />
           </TooltipProvider>
         </Providers>
       </body>

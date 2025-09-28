@@ -2,11 +2,9 @@ import { ContactBar } from "@/components/mosque/ContactBar";
 import { Navigation } from "@/components/mosque/Navigation";
 import { HeroSection } from "@/components/mosque/HeroSection";
 import { PrayerTimings } from "@/components/mosque/PrayerTimings";
-import { WhatWeDo } from "@/components/mosque/WhatWeDo";
-import { PastEvents } from "@/components/mosque/PastEvents";
+import { CombinedFeedAndHighlights } from "@/components/mosque/PastEvents";
 import { UpcomingEvents } from "@/components/mosque/UpcomingEvents";
 import { CallToAction } from "@/components/mosque/CallToAction";
-import { Footer } from "@/components/mosque/Footer";
 
 export default function Home() {
   return (
@@ -63,11 +61,9 @@ export default function Home() {
         </div>
       </section>
       <PrayerTimings />
-      <WhatWeDo />
-      <PastEvents />
+      <CombinedFeedAndHighlights />
       <UpcomingEvents />
       <CallToAction />
-      <Footer />
     </main>
   );
 }

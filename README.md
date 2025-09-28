@@ -26,10 +26,6 @@ Visit [http://localhost:3000](http://localhost:3000) to explore the application.
 Create a `.env.local` file and populate the following values:
 
 ```bash
-# Google OAuth Configuration (REQUIRED for Calendar integration)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_REDIRECT_URI=https://your-production-domain.com/api/auth/google/callback
 
 # Application URL (REQUIRED - use your production domain)
 NEXT_PUBLIC_API_URL=https://your-production-domain.com

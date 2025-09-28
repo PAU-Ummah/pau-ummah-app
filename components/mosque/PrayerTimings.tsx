@@ -3,7 +3,6 @@
 import { PRAYER_SCHEDULE } from "@/lib/constants";
 import { usePrayerTimes } from "@/lib/hooks/usePrayerTimes";
 import { CountdownTimer } from "@/components/mosque/CountdownTimer";
-import { CalendarSubscription } from "@/components/mosque/CalendarSubscription";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -17,7 +16,7 @@ export function PrayerTimings() {
   const displaySchedule = todaysSchedule?.length ? todaysSchedule : PRAYER_SCHEDULE;
 
   return (
-    <section id="prayer-times" className="relative bg-white py-16 md:py-20">
+    <section id="prayer-times" className="relative bg-slate-50 py-16 md:py-20">
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#001f3f] via-[#34495e] to-[#58a44d]" />
       <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10 px-4 md:gap-12 md:px-6 lg:flex-row lg:items-center">
         <div className="flex-1 space-y-5 md:space-y-6">
@@ -56,9 +55,6 @@ export function PrayerTimings() {
                     <span>Congregation</span>
                     <span className="font-semibold text-[var(--brand-primary)]">{nextPrayer.congregation}</span>
                   </div>
-                  <div className="mt-4 flex justify-center">
-                  <CalendarSubscription />
-                </div>
                   <div className="h-12"></div>
                 </div>
               </div>

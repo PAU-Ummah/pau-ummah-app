@@ -6,11 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-const HERO_STATS = [
-  { label: "Active Members", value: "400+" },
-  { label: "Weekly Programs", value: "4" },
-  { label: "Volunteer Hours", value: "24/7" },
-];
 
 export function HeroSection() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -46,16 +41,8 @@ export function HeroSection() {
               <Link href="#prayer-times">View Prayer Timings</Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white/60 bg-transparent text-black hover:bg-white/10 hover:text-white transition-colors duration-200" asChild>
-              <Link href="/feed">Explore Media Feed</Link>
+              <Link href="#past-events">Explore Media Feed</Link>
             </Button>
-          </div>
-          <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-3 sm:gap-6">
-            {HERO_STATS.map((stat) => (
-              <div key={stat.label} className="rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
-                <p className="text-2xl font-semibold">{stat.value}</p>
-                <p className="text-sm text-white/70">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -86,12 +73,12 @@ export function HeroSection() {
                 <span className="text-[var(--brand-secondary)]">5x</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-slate-100/70 px-4 py-3 text-sm font-semibold">
-                <span>Weekly knowledge circles</span>
-                <span className="text-[var(--brand-secondary)]">7</span>
+                <span>Weekly circles</span>
+                <span className="text-[var(--brand-secondary)]">2</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-slate-100/70 px-4 py-3 text-sm font-semibold">
                 <span>Volunteer opportunities</span>
-                <span className="text-[var(--brand-secondary)]">25+</span>
+                <span className="text-[var(--brand-secondary)]">10+</span>
               </div>
             </div>
           </div>
