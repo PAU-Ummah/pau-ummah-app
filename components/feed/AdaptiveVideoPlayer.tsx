@@ -37,11 +37,8 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
     isMobile, 
     connectionType, 
     isLowEndDevice,
-    getPreloadStrategy,
-    getQualitySettings 
+    getPreloadStrategy
   } = useMobileOptimization();
-
-  const qualitySettings = getQualitySettings();
 
   // Clean up HLS instance
   const destroyPlayer = useCallback(() => {
@@ -146,7 +143,7 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
         setIsLoading(false);
       });
     }
-  }, [src, destroyPlayer, isHLS]);
+  }, [src, destroyPlayer, isHLS, isMobile, connectionType, isLowEndDevice]);
 
   // Handle quality change (only for HLS streams)
   const handleQualityChange = useCallback((quality: string) => {
@@ -270,7 +267,6 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
         playsInline
         muted={muted}
         preload={getPreloadStrategy()}
-        poster={poster}
       />
       
       {/* Loading indicator */}

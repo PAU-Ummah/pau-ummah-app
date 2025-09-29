@@ -34,7 +34,6 @@ export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
     isMobile, 
     getImageParams, 
     getVideoParams, 
-    getPreloadStrategy,
     getQualitySettings 
   } = useMobileOptimization();
 

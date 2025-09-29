@@ -21,7 +21,13 @@ export function useMobileOptimization() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 
     // Detect connection type
-    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    interface NetworkConnection {
+      effectiveType?: string;
+    }
+    
+    const connection = (navigator as Navigator & { connection?: NetworkConnection; mozConnection?: NetworkConnection; webkitConnection?: NetworkConnection }).connection || 
+                      (navigator as Navigator & { mozConnection?: NetworkConnection; webkitConnection?: NetworkConnection }).mozConnection || 
+                      (navigator as Navigator & { webkitConnection?: NetworkConnection }).webkitConnection;
     let connectionType: 'slow' | 'fast' | 'unknown' = 'unknown';
     
     if (connection) {
@@ -37,9 +43,10 @@ export function useMobileOptimization() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Detect low-end device (basic heuristic)
+    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     const isLowEndDevice = isMobile && (
       navigator.hardwareConcurrency <= 2 || // Low CPU cores
-      (navigator as any).deviceMemory <= 2 || // Low RAM (if available)
+      (deviceMemory !== undefined && deviceMemory <= 2) || // Low RAM (if available)
       /Android.*Chrome\/[0-5][0-9]/.test(userAgent) // Old Android Chrome
     );
 

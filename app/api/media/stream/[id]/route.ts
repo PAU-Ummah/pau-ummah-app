@@ -24,8 +24,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { searchParams } = new URL(request.url);
     const width = searchParams.get("w");
     const height = searchParams.get("h");
-    const quality = searchParams.get("q");
-    const format = searchParams.get("f");
     
     // Detect mobile devices from User-Agent
     const userAgent = request.headers.get("user-agent") || "";
@@ -34,13 +32,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Set default mobile-optimized parameters
     const defaultWidth = isMobile ? 420 : 800;
     const defaultHeight = isMobile ? 600 : 600;
-    const defaultQuality = isMobile ? 75 : 85;
-    const defaultFormat = isMobile ? "webp" : "original";
 
     const targetWidth = width ? parseInt(width, 10) : defaultWidth;
     const targetHeight = height ? parseInt(height, 10) : defaultHeight;
-    const targetQuality = quality ? parseInt(quality, 10) : defaultQuality;
-    const targetFormat = format || defaultFormat;
+    // Note: targetQuality and targetFormat are available for future image processing
+    // const targetQuality = quality ? parseInt(quality, 10) : defaultQuality;
+    // const targetFormat = format || defaultFormat;
 
     // Handle HEIC/HEIF files - browsers don't support them natively
     const isHeic = mimeType === "image/heic" || mimeType === "image/heif";
