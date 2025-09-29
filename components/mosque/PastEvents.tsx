@@ -48,7 +48,7 @@ export function CombinedFeedAndHighlights() {
               <p className="text-xs lg:text-sm text-slate-600">Browse through our latest moments and memories</p>
             </div>
             
-            <div className="h-[400px] sm:h-[500px] md:h-[600px] lg:h-[850px] overflow-y-auto snap-y snap-mandatory rounded-xl lg:rounded-2xl border border-slate-200 bg-black shadow-sm">
+            <div className="h-[600px] sm:h-[500px] md:h-[600px] lg:h-[850px] overflow-y-auto snap-y snap-mandatory rounded-xl lg:rounded-2xl border border-slate-200 bg-black shadow-sm">
               {isLoading && feedItems.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
@@ -63,12 +63,12 @@ export function CombinedFeedAndHighlights() {
               ) : (
                 <div className="flex flex-col">
                   {feedItems.map((item, idx) => (
-                    <div key={`${item.id}-${idx}`} className="h-[400px] sm:h-[500px] md:h-[600px] lg:h-[850px] snap-start snap-always flex-shrink-0">
+                    <div key={`${item.id}-${idx}`} className="h-[600px] sm:h-[500px] md:h-[600px] lg:h-[850px] snap-start snap-always flex-shrink-0">
                       <MediaItem item={item} onLike={likeMedia} priority={idx < 2} />
                     </div>
                   ))}
                   {hasMore && (
-                    <div className="h-[400px] sm:h-[500px] md:h-[600px] lg:h-[850px] snap-start snap-always flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-black to-slate-900">
+                    <div className="h-[600px] sm:h-[500px] md:h-[600px] lg:h-[850px] snap-start snap-always flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-black to-slate-900">
                       <Button 
                         variant="outline" 
                         onClick={() => loadMore()}
