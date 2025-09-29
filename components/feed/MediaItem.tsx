@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { MediaItem as MediaItemType } from "@/types";
@@ -8,6 +8,8 @@ import { AdaptiveVideoPlayer } from "@/components/feed/AdaptiveVideoPlayer";
 import { EngagementButton } from "@/components/feed/EngagementButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIntersection } from "@/lib/hooks/useIntersection";
+import { useMobileOptimization } from "@/lib/hooks/useMobileOptimization";
+import { trackImageLoad } from "@/components/feed/PerformanceMonitor";
 
 interface MediaItemProps {
   item: MediaItemType;
@@ -23,7 +25,26 @@ export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
   });
   const [showHeart, setShowHeart] = useState(false);
   const [scale, setScale] = useState(1);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [loadStartTime, setLoadStartTime] = useState<number>(0);
   const pointers = useRef<Map<number, PointerEvent>>(new Map());
+
+  // Use mobile optimization hook
+  const { 
+    isMobile, 
+    getImageParams, 
+    getVideoParams, 
+    getQualitySettings 
+  } = useMobileOptimization();
+
+  const qualitySettings = getQualitySettings();
+
+  // Track when image starts loading
+  useEffect(() => {
+    if (item.type === "image" && isVisible && !imageLoaded) {
+      setLoadStartTime(Date.now());
+    }
+  }, [item.type, isVisible, imageLoaded]);
 
   const handleDoubleTap = useCallback(() => {
     onLike(item.id);
@@ -76,7 +97,7 @@ export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
         >
           {item.type === "video" ? (
             <AdaptiveVideoPlayer 
-              src={item.url} 
+              src={getVideoParams(item.url)}
               poster={item.thumbnail} 
               isActive={isVisible} 
               onProgress={() => {
@@ -85,19 +106,37 @@ export function MediaItem({ item, onLike, priority = false }: MediaItemProps) {
             />
           ) : (
             <motion.div
-              animate={{ scale }}
-              transition={{ type: "spring", stiffness: 120, damping: 18 }}
+              animate={qualitySettings.enableAnimations ? { scale } : {}}
+              transition={qualitySettings.enableAnimations ? { type: "spring", stiffness: 120, damping: 18 } : {}}
               className="relative h-full w-full"
             >
+              {/* Loading placeholder */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                </div>
+              )}
+              
               <Image
-                src={item.url}
+                src={getImageParams(item.url)}
                 alt={item.title}
                 fill
-                className="object-cover"
-                sizes="420px"
+                className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                sizes={isMobile ? "420px" : "800px"}
                 priority={priority}
                 fetchPriority={priority ? "high" : "auto"}
-                quality={75}
+                quality={qualitySettings.imageQuality}
+                onLoad={() => {
+                  setImageLoaded(true);
+                  if (loadStartTime > 0) {
+                    const loadTime = Date.now() - loadStartTime;
+                    trackImageLoad(loadTime);
+                  }
+                }}
+                onError={() => {
+                  console.warn('Failed to load image:', item.url);
+                  setImageLoaded(true); // Show fallback
+                }}
               />
             </motion.div>
           )}
