@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { googleDriveService } from "@/lib/google-drive";
 
 // Streams image content from Google Drive via the server, using the service account.
-// GET /api/media/stream/:id
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET /api/media/stream/:id?w=800&h=600&q=80&f=webp
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Missing file id" }, { status: 400 });
@@ -20,12 +20,40 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Only images are supported by this endpoint" }, { status: 415 });
     }
 
+    // Parse query parameters for image optimization
+    const { searchParams } = new URL(request.url);
+    const width = searchParams.get("w");
+    const height = searchParams.get("h");
+    const quality = searchParams.get("q");
+    const format = searchParams.get("f");
+    
+    // Detect mobile devices from User-Agent
+    const userAgent = request.headers.get("user-agent") || "";
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    
+    // Set default mobile-optimized parameters
+    const defaultWidth = isMobile ? 420 : 800;
+    const defaultHeight = isMobile ? 600 : 600;
+    const defaultQuality = isMobile ? 75 : 85;
+    const defaultFormat = isMobile ? "webp" : "original";
+
+    const targetWidth = width ? parseInt(width, 10) : defaultWidth;
+    const targetHeight = height ? parseInt(height, 10) : defaultHeight;
+    const targetQuality = quality ? parseInt(quality, 10) : defaultQuality;
+    const targetFormat = format || defaultFormat;
+
     // Handle HEIC/HEIF files - browsers don't support them natively
-    // For now, we'll serve them as-is and let the client handle the fallback
     const isHeic = mimeType === "image/heic" || mimeType === "image/heif";
 
     const accessToken = await googleDriveService.getAccessToken();
-    const driveUrl = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`;
+    
+    // For mobile, request smaller images from Google Drive if possible
+    let driveUrl = `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`;
+    
+    // Add size parameters for Google Drive API (if supported)
+    if (isMobile && !isHeic) {
+      driveUrl += `&w=${Math.min(targetWidth, 1920)}&h=${Math.min(targetHeight, 1080)}`;
+    }
 
     const res = await fetch(driveUrl, {
       headers: {
@@ -51,9 +79,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       
       return new NextResponse(res.body, { status: 200, headers });
     } else {
-      // For regular images, serve as-is
+      // For regular images, serve with optimized headers
       headers.set("Content-Type", mimeType);
-      headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+      
+      // Enhanced caching for mobile
+      const cacheControl = isMobile 
+        ? "public, s-maxage=600, stale-while-revalidate=1200, max-age=300"
+        : "public, s-maxage=300, stale-while-revalidate=600";
+      headers.set("Cache-Control", cacheControl);
+      
+      // Add performance hints
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("X-Frame-Options", "SAMEORIGIN");
       
       // Optional: Content-Length if present
       const len = res.headers.get("content-length");

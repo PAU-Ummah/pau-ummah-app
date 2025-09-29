@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Hls from 'hls.js';
 import { Volume2, VolumeX, Maximize2, Loader2, Settings } from "lucide-react";
+import { useMobileOptimization } from "@/lib/hooks/useMobileOptimization";
 
 interface QualityLevel {
   width: number;
@@ -30,6 +31,17 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
   const [currentQuality, setCurrentQuality] = useState<string>('auto');
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Use mobile optimization hook
+  const { 
+    isMobile, 
+    connectionType, 
+    isLowEndDevice,
+    getPreloadStrategy,
+    getQualitySettings 
+  } = useMobileOptimization();
+
+  const qualitySettings = getQualitySettings();
 
   // Clean up HLS instance
   const destroyPlayer = useCallback(() => {
@@ -64,8 +76,15 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
       console.log('Using HLS.js for HLS stream:', src);
       const hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 30,
+        lowLatencyMode: !isMobile && connectionType !== 'slow', // Disable low latency on mobile/slow connections
+        backBufferLength: isLowEndDevice ? 5 : (isMobile ? 10 : 30), // Smaller buffer on mobile/low-end devices
+        maxBufferLength: isLowEndDevice ? 15 : (isMobile ? 30 : 60),
+        maxMaxBufferLength: isLowEndDevice ? 30 : (isMobile ? 60 : 120),
+        maxBufferSize: isLowEndDevice ? 15 * 1000 * 1000 : (isMobile ? 30 * 1000 * 1000 : 60 * 1000 * 1000),
+        maxBufferHole: isLowEndDevice ? 0.05 : (isMobile ? 0.1 : 0.5),
+        startLevel: isMobile ? -1 : -1, // Auto quality selection
+        capLevelToPlayerSize: isMobile, // Cap quality to player size on mobile
+        maxLoadingDelay: isLowEndDevice ? 2 : 4, // Faster timeout on low-end devices
       });
 
       hlsRef.current = hls;
@@ -250,6 +269,8 @@ export function AdaptiveVideoPlayer({ src, poster, isActive, onProgress }: Adapt
         className="h-full w-full object-cover"
         playsInline
         muted={muted}
+        preload={getPreloadStrategy()}
+        poster={poster}
       />
       
       {/* Loading indicator */}

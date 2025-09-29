@@ -7,6 +7,8 @@ import type { EventCategory, MediaItem as MediaItemType } from "@/types";
 import { useMediaFeed } from "@/lib/hooks/useMediaFeed";
 import { MediaItem } from "@/components/feed/MediaItem";
 import { FilterPills } from "@/components/mosque/FilterPills";
+import { useMobileOptimization } from "@/lib/hooks/useMobileOptimization";
+import { PerformanceMonitor } from "@/components/feed/PerformanceMonitor";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -16,9 +18,18 @@ export function MediaFeed() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [attemptedLoadMore, setAttemptedLoadMore] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Use mobile optimization for better performance
+  const { isMobile, connectionType } = useMobileOptimization();
 
   useEffect(() => {
     if (!sentinelRef.current) return;
+    
+    // Adjust intersection observer settings based on device capabilities
+    const rootMargin = isMobile 
+      ? (connectionType === 'slow' ? "100px 0px" : "150px 0px")
+      : "200px 0px";
+    
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
@@ -29,18 +40,19 @@ export function MediaFeed() {
       },
       {
         threshold: 0.25,
-        rootMargin: "200px 0px",
+        rootMargin,
       },
     );
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, isMobile, connectionType]);
 
   const combinedItems = useMemo<MediaItemType[]>(() => mediaItems, [mediaItems]);
 
   return (
     <div className="flex h-screen flex-col bg-black text-white pb-[env(safe-area-inset-bottom)]">
+      <PerformanceMonitor />
       <div className="px-4 pt-4 md:px-6 md:pt-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 md:gap-4">
@@ -122,7 +134,12 @@ export function MediaFeed() {
           ) : (
             <>
               {combinedItems.map((item, idx) => (
-                <MediaItem key={`${item.id}-${idx}`} item={item} onLike={likeMedia} priority={idx < 1} />
+                <MediaItem 
+                  key={`${item.id}-${idx}`} 
+                  item={item} 
+                  onLike={likeMedia} 
+                  priority={idx < (isMobile ? 2 : 1)} // Load more items on mobile for smoother scrolling
+                />
               ))}
               <div ref={sentinelRef} className="h-24 snap-none" />
             </>
