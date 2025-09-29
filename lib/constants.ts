@@ -9,7 +9,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
   { label: "Prayer Times", href: "#prayer-times" },
-  { label: "What We Do", href: "#services" },
   { label: "Past Events", href: "#past-events" },
   { label: "Upcoming Events", href: "#upcoming-events" },
   { label: "Contact", href: "#contact" },
@@ -54,46 +53,6 @@ export const PRAYER_SCHEDULE: PrayerSchedule[] = [
   },
 ];
 
-export const WHAT_WE_DO_ITEMS: WhatWeDoItem[] = [
-  {
-    id: "spiritual-growth",
-    title: "Daily Congregational Prayers",
-    description:
-      "Join our vibrant community for all five daily prayers alongside inspiring reminders and supplications.",
-    icon: "moon-star",
-    ctaLabel: "View prayer schedule",
-    href: "#prayer-times",
-  },
-  {
-    id: "education",
-    title: "Knowledge Circles",
-    description:
-      "Weekly halaqahs, tafsir sessions, and seminars with scholars that nurture sound Islamic understanding.",
-    icon: "book-open",
-    ctaLabel: "Explore learning",
-    href: "#upcoming-events",
-  },
-  {
-    id: "community",
-    title: "Community Service",
-    description:
-      "Volunteer-driven programmes that empower the Ummah through social impact, mentorship, and charity.",
-    icon: "users",
-    ctaLabel: "Join the team",
-    href: "#contact",
-  },
-  {
-    id: "wellness",
-    title: "Student Wellbeing",
-    description:
-      "Peer support, counselling referrals, and recreation nights that keep students energised and connected.",
-    icon: "heart",
-    ctaLabel: "Discover resources",
-    href: "#about",
-  },
-];
-
-// Removed EVENT_CATEGORIES, UPCOMING_EVENTS, PAST_EVENTS in favor of Drive-powered dynamic content
 
 // FEATURED_MEDIA and STORIES_PREVIEWS removed in favor of dynamic Drive-powered content
 
